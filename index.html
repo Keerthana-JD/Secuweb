@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Vulnerability Search</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+
+        form#loginForm, #searchSection {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="email"],
+        input[type="password"],
+        input[type="text"] {
+            width: calc(100% - 12px); /* Adjust for padding and border */
+            padding: 6px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #results {
+            margin-top: 20px;
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        #results p {
+            margin: 5px 0;
+        }
+
+        #results a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        #results a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1>Login</h1>
+    <form id="loginForm">
+        <label for="email">Email:</label><br>
+        <input type="email" id="email" name="email"><br><br>
+        <label for="password">Password:</label><br>
+        <input type="password" id="password" name="password"><br><br>
+        <button type="button" onclick="login()">Login</button>
+    </form>
+
+    <div id="searchSection" style="display: none;">
+        <h1>Vulnerability Search</h1>
+        <input type="text" id="cveId" placeholder="CVE ID">
+        <input type="text" id="oem" placeholder="OEM">
+        <input type="text" id="severity" placeholder="Severity">
+        <button onclick="search()">Search</button>
+        <div id="results"></div>
+
+        <h2>Email Notifications</h2>
+        <form id="notificationForm">
+            <label for="notificationEmail">Your Email:</label><br>
+            <input type="email" id="notificationEmail" name="notificationEmail"><br><br>
+            <button type="button" onclick="notifyMe()">Notify Me</button>
+        </form>
+    </div>
+
+    <script>
+        function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            // Basic login simulation.
+            if (email && password) {
+                document.getElementById('loginForm').style.display = 'none';
+                document.getElementById('searchSection').style.display = 'block';
+            } else {
+                alert("Please enter both email and password.");
+            }
+        }
+
+        function search() {
+             const cveId = document.getElementById('cveId').value;
+    const oem = document.getElementById('oem').value;
+    const severity = document.getElementById('severity').value;
+    const url = "https://services.nvd.nist.gov/rest/json/cves/2.0";
+    let params = {};
+
+    if (cveId) {
+        params["cveId"] = cveId;
+    }
+
+    if (oem) {
+        // OEM is not a direct parameter in the NVD API.
+        // We will need to filter the results client-side.
+        // So, we don't add it to the API request parameters.
+    }
+
+    if (severity) {
+        // Severity is not a direct parameter in the NVD API.
+        // We will need to filter the results client-side.
+        // So we don't add it to the API request parameters.
+    }
+
+    let queryParams = new URLSearchParams(params);
+
+    fetch(url + "?" + queryParams)
+        .then(response => response.json())
+        .then(data => {
+            let resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = ''; // Clear previous results
+
+            if (data && data.vulnerabilities) {
+                data.vulnerabilities.forEach(vuln => {
+                    let showVuln = true;
+
+                    if (oem) {
+                        // Add OEM filtering logic here (client-side).
+                        // Example:
+                        // if (vuln.cve.configurations && vuln.cve.configurations[0].nodes[0].cpeMatch[0].cpe23Uri.includes(oem)) {
+                        //     showVuln = true;
+                        // } else {
+                        //     showVuln = false;
+                        // }
+                        // This is a placeholder. You will need to examine the data returned from the NVD API and determine how to filter by OEM.
+                    }
+
+                    if (severity) {
+                        // Add Severity filtering logic here (client-side).
+                        // Example:
+                        // if (vuln.cve.metrics.cvssMetricV31 && vuln.cve.metrics.cvssMetricV31[0].cvssData.baseSeverity.toLowerCase() === severity.toLowerCase()) {
+                        //     showVuln = true;
+                        // } else {
+                        //     showVuln = false;
+                        // }
+                        // This is a placeholder. You will need to examine the data returned from the NVD API and determine how to filter by severity.
+                    }
+
+                    if (showVuln) {
+                        resultsDiv.innerHTML += `<p><a href="https://nvd.nist.gov/vuln/detail/${vuln.cve.id}" target="_blank">${vuln.cve.id}</a></p>`;
+                    }
+                });
+            } else {
+                resultsDiv.innerHTML = '<p>No results found.</p>';
+            }
+        })
+        .catch(error => {
+            console.error("Error fetching data:", error);
+            document.getElementById('results').innerHTML = '<p>Error fetching data.</p>';
+        });
+        }
+
+        function notifyMe() {
+            const email = document.getElementById('notificationEmail').value;
+            if (email) {
+                alert(`Notification sent to: ${email} (Simulated)`);
+                // In a real application, you would send an email here.
+            } else {
+                alert("Please enter your email.");
+            }
+        }
+    </script>
+</body>
+</html>
